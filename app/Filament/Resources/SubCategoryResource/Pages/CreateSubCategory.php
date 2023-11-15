@@ -12,7 +12,7 @@ class CreateSubCategory extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug'] = Str::slug($data['name_en']);
 
         return $data;
     }

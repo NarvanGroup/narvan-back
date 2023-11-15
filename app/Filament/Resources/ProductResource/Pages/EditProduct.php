@@ -20,7 +20,7 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug'] = Str::slug($data['name_en']);
 
         return $data;
     }
