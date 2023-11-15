@@ -18,7 +18,7 @@ class SubCategoryRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                Forms\Components\TextInput::make('name_fa')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -29,7 +29,7 @@ class SubCategoryRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name'),
+                Tables\Columns\TextColumn::make('name_fa'),
             ])
             ->filters([
                 //
