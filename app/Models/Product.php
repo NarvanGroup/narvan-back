@@ -19,7 +19,7 @@ class Product extends Model
     protected $hidden = ['id'];
 
     protected $fillable = [
-        'name', 'slug', 'image', 'description', 'category_id', 'sub_category_id', 'attributes', 'tags'
+        'name_en', 'name_fa', 'slug', 'image', 'description', 'category_id', 'sub_category_id', 'attributes', 'tags'
     ];
 
     protected $casts = [

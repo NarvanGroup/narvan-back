@@ -23,7 +23,7 @@ class Blog extends Model
     protected $hidden = ['id'];
 
     protected $fillable = [
-        'name', 'slug', 'content', 'images', 'description', 'user_id', 'category_id', 'sub_category_id', 'keywords',
+        'name_en', 'name_fa', 'slug', 'content', 'images', 'description', 'user_id', 'category_id', 'sub_category_id', 'keywords',
         'tags'
     ];
 

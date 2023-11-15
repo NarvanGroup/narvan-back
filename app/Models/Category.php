@@ -17,7 +17,7 @@ class Category extends Model
 
     protected $hidden = ['id'];
 
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name_en', 'name_fa', 'slug'];
 
     public static array $allowedIncludes = ['subCategories', 'subCategories.products', 'products', 'blogs'];
 

@@ -18,7 +18,7 @@ class SubCategory extends Model
 
     protected $hidden = ['id'];
 
-    protected $fillable = ['name', 'slug', 'category_id'];
+    protected $fillable = ['name_en', 'name_fa', 'slug', 'category_id'];
 
     public static array $allowedIncludes = ['category', 'products', 'blogs'];
 
