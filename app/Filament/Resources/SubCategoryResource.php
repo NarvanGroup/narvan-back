@@ -8,17 +8,24 @@ use App\Filament\Resources\ProductResource\RelationManagers\CategoryRelationMana
 use App\Filament\Resources\SubCategoryResource\Api\Transformers\SubCategoryTransformer;
 use App\Filament\Resources\SubCategoryResource\Pages;
 use App\Models\SubCategory;
+use App\Traits\ReplicationTrait;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\ReplicateAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class SubCategoryResource extends Resource
 {
+
+    use ReplicationTrait;
+
     protected static ?string $model = SubCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
@@ -27,13 +34,17 @@ class SubCategoryResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
+                TextInput::make('name_en')
+                    ->unique(ignoreRecord: true)
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('name_fa')
                     ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(255),
                 Select::make('category_id')
                     ->required()
-                    ->relationship('category', 'name')
+                    ->relationship('category', 'name_fa')
                     ->searchable()
                     ->preload()
             ]);
@@ -43,7 +54,9 @@ class SubCategoryResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make('name_en')
+                    ->searchable(),
+                TextColumn::make('name_fa')
                     ->searchable(),
                 TextColumn::make('slug')
             ])
@@ -52,6 +65,11 @@ class SubCategoryResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                ReplicateAction::make()
+                    ->beforeReplicaSaved(static function (Model $replica): void {
+                        static::replicate($replica);
+                    }),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

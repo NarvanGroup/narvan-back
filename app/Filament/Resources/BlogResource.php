@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BlogResource\Api\Transformers\BlogTransformer;
 use App\Filament\Resources\BlogResource\Pages;
 use App\Models\Blog;
+use App\Traits\ReplicationTrait;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
@@ -14,16 +15,22 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ReplicateAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Str;
 
 class BlogResource extends Resource
 {
+    use ReplicationTrait;
+
     protected static ?string $model = Blog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
@@ -32,7 +39,11 @@ class BlogResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
+                TextInput::make('name_en')
+                    ->unique(ignoreRecord: true)
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('name_fa')
                     ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(255),
@@ -45,22 +56,27 @@ class BlogResource extends Resource
                     ->required(),
                 Select::make('category_id')
                     ->required()
-                    ->relationship('category', 'name')
+                    ->relationship('category', 'name_fa')
                     ->searchable()
                     ->preload(),
                 Select::make('sub_category_id')
                     ->required()
-                    ->relationship('subCategory', 'name')
+                    ->relationship(
+                        name: 'subCategory',
+                        titleAttribute: 'name_fa',
+                        modifyQueryUsing: fn (Builder $query, $get) => $query->where('category_id',$get('category_id')),
+                    )
                     ->searchable()
                     ->preload(),
-                FileUpload::make('image')
+                FileUpload::make('images')
                     ->nullable()
+                    ->multiple()
                     ->downloadable()
                     ->image()
                     ->imageEditor()
                     ->getUploadedFileNameForStorageUsing(
                         static fn(TemporaryUploadedFile $file): string => (string) str(Str::uuid())
-                            ->prepend('product-')
+                            ->prepend('blog-')
                             ->append(sprintf(".%s", $file->extension())),
                     ),
                 TextInput::make('description')->nullable(),
@@ -73,7 +89,9 @@ class BlogResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make('name_en')
+                    ->searchable(),
+                TextColumn::make('name_fa')
                     ->searchable(),
                 TextColumn::make('slug'),
                 TextColumn::make('content')
@@ -81,13 +99,16 @@ class BlogResource extends Resource
                 TextColumn::make('description'),
                 ImageColumn::make('images')
                     ->defaultImageUrl(url('/images/no image.png'))
-                    ->square()
+                    ->circular()
                     ->stacked()
-                    ->ring(8)
-                    ->size(100),
+                    ->ring(5)
+                    ->overlap(2)
+                    ->limit()
+                    ->limitedRemainingText()
+                    ->size(50),
                 TextColumn::make('user.name'),
-                TextColumn::make('category.name'),
-                TextColumn::make('subCategory.name'),
+                TextColumn::make('category.name_fa'),
+                TextColumn::make('subCategory.name_fa'),
                 TextColumn::make('keywords'),
                 TextColumn::make('tags'),
             ])
@@ -96,6 +117,11 @@ class BlogResource extends Resource
             ])
             ->actions([
                 EditAction::make(),
+                ReplicateAction::make()
+                    ->beforeReplicaSaved(static function (Model $replica): void {
+                        static::replicate($replica);
+                    }),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
